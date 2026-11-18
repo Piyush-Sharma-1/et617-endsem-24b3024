@@ -1,0 +1,8 @@
+{
+  "name": "et617-24b3024",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.10.0"
+  }
+}
