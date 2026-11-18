@@ -63,9 +63,15 @@ function bar(buttons) {
 }
 function compareLast() {
   const n = S.runs.length; if (n < 2) return null;
-  const a = S.runs[n - 2], b = S.runs[n - 1];
-  const changed = ['L', 'm', 'A'].filter((k) => a[k] !== b[k]);
-  return { a, b, ia: n - 1, ib: n, changed };
+  const b = S.runs[n - 1];
+  const diff = (a) => ['L', 'm', 'A'].filter((k) => a[k] !== b[k]);
+  // Prefer the latest earlier run that makes a fair test with the newest run (only the tested variable differs)
+  for (let i = n - 2; i >= 0; i--) {
+    const d = diff(S.runs[i]);
+    if (d.length === 1 && d[0] === S.v) return { a: S.runs[i], b, ia: i + 1, ib: n, changed: d };
+  }
+  const a = S.runs[n - 2];
+  return { a, b, ia: n - 1, ib: n, changed: diff(a) };
 }
 // Effect of making the variable bigger, judged from two runs (3% band = "same", like a real stopwatch)
 function observedEffect(c, v) {
@@ -232,7 +238,7 @@ function finishRun(skipped) {
 /* 6. Compare — the heart of the inquiry loop, incl. support after an unsuccessful experiment */
 screens.compare = () => {
   const V = VARS[S.v], c = compareLast();
-  let html = `<p class="step">Compare your last two runs</p>${runsTable(true)}`;
+  let html = `<p class="step">Compare your runs</p>${runsTable(true)}`;
   let buttons = [{ label: '◀ Lab', on: () => go('lab') }];
   if (!c.changed.length || !c.changed.includes(S.v)) {
     html += `<div class="warn"><b>We cannot answer our question yet.</b> Between Run ${c.ia} and Run ${c.ib} the <b>${V.name}</b> did not change. Change the ${V.name} and run again.</div>`;
