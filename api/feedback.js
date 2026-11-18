@@ -2,7 +2,7 @@
 // Input:  { variable: 'L'|'m'|'A', explanation: string, runs: [{L,m,A,T}] }
 // Output: { verdict: 'correct'|'partial'|'misconception', misconception: 'M1'|'M2'|null, feedback: string }
 // The key lives only in the Vercel env var ANTHROPIC_API_KEY. If it is missing or anything fails,
-// we return 503 and the browser uses its rule-based fallback (labelled "Offline feedback").
+// we return 503 and the browser uses its rule-based fallback (labelled "Quick check · rule-based").
 import Anthropic from '@anthropic-ai/sdk';
 
 const TOPIC = {

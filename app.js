@@ -406,7 +406,7 @@ screens.compare = () => {
   } else {
     const eff = observedEffect(c, S.v);
     const pct = Math.abs((c.b.T - c.a.T) / c.a.T * 100).toFixed(1);
-    html += `<div class="card">${V.name}: <b>${c.a[S.v]} → ${c.b[S.v]} ${V.unit}</b><br>Period: <b>${c.a.T.toFixed(2)} s → ${c.b.T.toFixed(2)} s</b> (${pct}% change)</div>`;
+    html += `<div class="card">${V.name}: <b>${c.a[S.v]} → ${c.b[S.v]} ${V.unit}</b><br>Period: <b>${c.a.T.toFixed(2)} s → ${c.b.T.toFixed(2)} s</b> (${pct}% change)<br><span class="mr">A change smaller than 3% counts as “the same” — a real stopwatch cannot measure better than that.</span></div>`;
     if (S.returnToQuiz) {
       // Came from a check-up question: show the evidence, then let her answer again herself
       html += `<div class="key">What happened to the period when you made the ${V.name} ${c.b[S.v] > c.a[S.v] ? 'bigger' : 'smaller'}? Keep this in mind and answer the question again.</div>`;
@@ -470,13 +470,16 @@ function wireExplain(v, onDone, key) {
     const fin = [...document.querySelectorAll('#bar button')].find((x) => x.textContent.includes('Finish')); if (fin) fin.disabled = false;
   };
 }
+let aiOff = false; // set after the first 503 so we do not wait on the network again
 async function getFeedback(v, text) {
+  if (aiOff) return { ...ruleFeedback(v, text), source: 'offline' };
   const runs = S.runs.slice(-6).map(({ L, m, A, T }) => ({ L, m, A, T: +T.toFixed(3) }));
   try {
     const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 9000);
     const r = await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ variable: v, explanation: text, runs }), signal: ctl.signal });
     clearTimeout(to);
+    if (r.status === 503 || r.status === 404) aiOff = true;
     if (!r.ok) throw new Error('status ' + r.status);
     const j = await r.json();
     if (!['correct', 'partial', 'misconception'].includes(j.verdict) || typeof j.feedback !== 'string') throw new Error('bad shape');
