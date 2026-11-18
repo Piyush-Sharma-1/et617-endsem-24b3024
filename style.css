@@ -135,3 +135,9 @@ textarea { min-height: 96px; }
 .speak:active { transform: translate(2px, 2px); box-shadow: none; }
 .btn:disabled, .pm:disabled, .chip:disabled { cursor: not-allowed; }
 details summary { cursor: pointer; min-height: 32px; }
+
+/* Usability pass: sentence-length headings in a plain bold font (easier for a slow English reader);
+   pixel font stays for titles, labels and buttons. On narrow phones the top bar shows only the logo. */
+h2 { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif; font-weight: 800; letter-spacing: 0; }
+#steps li { white-space: nowrap; }
+@media (max-width: 420px) { #top .brand { font-size: 0; gap: 0; } #steps li { padding: 3px 6px; } }
