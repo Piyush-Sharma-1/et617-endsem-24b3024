@@ -241,7 +241,7 @@ screens.lab = () => {
   const V = VARS[S.v];
   const ctrl = (k) => { const X = VARS[k]; return `
     <div class="ctrl ${k === S.v ? 'focus' : ''}">
-      <label for="r${k}"><span>${k === S.v ? '👉 ' : ''}${X.name} <span class="mr">${X.mr}</span></span><span class="val" id="o${k}">${S.cfg[k]} ${X.unit}</span></label>
+      <label for="r${k}"><span>${k === S.v ? px('hand', 'sm') : ''}${X.name} <span class="mr">${X.mr}</span></span><span class="val" id="o${k}">${S.cfg[k]} ${X.unit}</span></label>
       <div class="row"><button class="pm" data-k="${k}" data-d="-1" aria-label="Decrease ${X.name}">−</button>
       <input type="range" id="r${k}" min="${X.min}" max="${X.max}" step="${X.step}" value="${S.cfg[k]}">
       <button class="pm" data-k="${k}" data-d="1" aria-label="Increase ${X.name}">+</button></div>
@@ -252,7 +252,7 @@ screens.lab = () => {
     ${msg ? `<div class="result pop">${msg}</div>` : ''}
     <div class="labbox">
       <canvas id="cv" width="640" height="420" aria-label="Pendulum. Drag the bob to set the angle."></canvas>
-      <div class="watch"><span>⏱ <span id="tw">0.00</span> s</span><span class="dots" id="dots">${'<i></i>'.repeat(10)}</span></div>
+      <div class="watch"><span>${px('slow', 'sm')} <span id="tw">0.00</span> s</span><span class="dots" id="dots">${'<i></i>'.repeat(10)}</span></div>
       <p class="draghint">${px('hand', 'sm')} Drag the bob to set the angle · ruler on the string = 10 cm marks</p>
     </div>
     ${S.runs.length ? `<p style="margin:0 0 6px;font-weight:700">Before you release: compared to Run ${S.runs.length}, this swing will be…</p>
@@ -351,9 +351,10 @@ function drawGraph() {
 function startRun() {
   const L = S.cfg.L / 100; let th = S.cfg.A * Math.PI / 180, w = 0, t = 0, count = 0, prevW = 0, last = performance.now();
   const target = timeFor10(S.cfg.L, S.cfg.A), trail = [];
-  anim = { target, stop: false };
+  anim = { target, stop: false, cfg: { ...S.cfg } };
   labBar(true);
-  document.querySelectorAll('.chip').forEach((b) => { b.disabled = true; });
+  // Lock all controls while the bob swings, so the recorded settings match the timing
+  document.querySelectorAll('.chip, .pm, input[type=range], #autoFair').forEach((b) => { b.disabled = true; });
   const tick = (now) => {
     if (!anim || anim.stop) return;
     let dtReal = Math.min(0.05, (now - last) / 1000); last = now;
@@ -368,8 +369,8 @@ function startRun() {
   requestAnimationFrame(tick);
 }
 function finishRun(skipped) {
-  if (!anim) return; const t10 = anim.target; anim.stop = true; anim = null;
-  const run = { L: S.cfg.L, m: S.cfg.m, A: S.cfg.A, t10, T: t10 / 10, v: S.v };
+  if (!anim) return; const t10 = anim.target, cfg = anim.cfg; anim.stop = true; anim = null;
+  const run = { L: cfg.L, m: cfg.m, A: cfg.A, t10, T: t10 / 10, v: S.v };
   const prev = S.runs[S.runs.length - 1];
   S.runs.push(run);
   let msg = `<b>Run ${S.runs.length}</b>: 10 swings took <b>${t10.toFixed(2)} s</b> → period = ${t10.toFixed(2)} ÷ 10 = <b>${run.T.toFixed(2)} s</b>`;
@@ -399,6 +400,9 @@ screens.compare = () => {
     html += `<div class="warn"><b>Not a fair test yet.</b> You changed the ${V.name} <b>and</b> the ${others} at the same time (see the yellow cells).<br>
       If the period changed, which one caused it? We cannot tell! Set the ${others} back to Run ${c.ia}'s value, and run again.</div>`;
     buttons.push({ label: 'Fix it in the lab ▶', primary: true, on: () => go('lab') });
+  } else if (!S.hyp && !S.returnToQuiz) {
+    html += `<div class="warn">First make a guess, then we can check it against your data.</div>`;
+    buttons.push({ label: 'Make a guess ▶', primary: true, on: () => go('hypothesis') });
   } else {
     const eff = observedEffect(c, S.v);
     const pct = Math.abs((c.b.T - c.a.T) / c.a.T * 100).toFixed(1);
@@ -437,8 +441,9 @@ screens.compare = () => {
 };
 
 /* Explanation box + feedback (AI with rule-based fallback) */
-function explainBox() {
-  const prev = S.explain[S.v];
+function explainBox(key) {
+  key = key || S.v;
+  const prev = S.explain[key];
   return `<h2>Explain in your own words</h2>
     <p>Why does the ${VARS[S.v].name} ${TRUTH[S.v] === 'same' ? '<b>not</b> change' : 'change'} the period? Use your numbers. (English, Marathi or Hinglish is fine.)</p>
     <textarea id="exTxt" placeholder="My data shows…">${prev ? esc(prev.text) : ''}</textarea>
@@ -450,17 +455,19 @@ function fbHtml(fb, v) {
   return `<div class="${cls}">${esc(fb.feedback)}</div><p class="src">${fb.source === 'ai' ? 'AI feedback · checked by the app' : 'Quick check · rule-based'}</p>`
     + `<details class="card"><summary><b>See a model answer</b></summary><p style="margin:8px 0 0">${MODEL[v]}</p></details>`;
 }
-function wireExplain(v, onDone) {
+function wireExplain(v, onDone, key) {
+  key = key || v;
   const b = $('#exBtn'); if (!b) return;
   b.onclick = async () => {
     const text = $('#exTxt').value.trim();
     if (text.length < 5) { $('#exFb').innerHTML = '<div class="warn">Write at least one sentence first.</div>'; return; }
     b.disabled = true; b.textContent = 'Checking…';
     const fb = await getFeedback(v, text);
-    S.explain[v] = { text, fb }; if (fb.misconception) S.mis[fb.misconception]++;
+    S.explain[key] = { text, fb }; if (fb.misconception) S.mis[fb.misconception]++;
     log('explain', { v, verdict: fb.verdict, source: fb.source }); save();
     $('#exFb').innerHTML = fbHtml(fb, v); b.disabled = false; b.textContent = 'Check again';
     if (onDone) onDone(fb);
+    const fin = [...document.querySelectorAll('#bar button')].find((x) => x.textContent.includes('Finish')); if (fin) fin.disabled = false;
   };
 }
 async function getFeedback(v, text) {
@@ -535,7 +542,7 @@ screens.quiz = () => {
     <h2>${q.text}</h2>`;
   if (q.type === 'mcq') body += `<div class="choices">${q.opts.map((o, i) => `<button class="choice ${fb ? (o[1] === true ? 'right' : fb.pick === i ? 'wrong' : '') : ''}" data-i="${i}" ${fb ? 'disabled' : ''}><span class="let">${'ABC'[i]}</span>${o[0]}</button>`).join('')}</div>`;
   if (q.type === 'num') body += `<input type="number" id="numIn" inputmode="decimal" step="0.1" placeholder="e.g. 1.5" ${fb ? 'disabled value="' + fb.pick + '"' : ''}><br><br>`;
-  if (q.type === 'explain') { S.v = 'm'; body += explainBox(); }
+  if (q.type === 'explain') { S.v = 'm'; body += explainBox('q5'); }
   if (fb) body += `<div class="pop ${fb.key === true || fb.key === 'true' ? 'ok' : 'bad'}">${q.fb[fb.key]}</div>`;
   $('#app').innerHTML = body;
   const answer = (key, pick) => {
@@ -547,8 +554,8 @@ screens.quiz = () => {
   document.querySelectorAll('.choice').forEach((el) => { el.onclick = () => answer(q.opts[+el.dataset.i][1], +el.dataset.i); });
   const next = () => { S.quiz.i++; S.quiz.fb = null; save(); render(); };
   if (q.type === 'explain') {
-    wireExplain('m', (f) => { if (!S.quiz.fb) { S.quiz.fb = { key: f.verdict === 'correct' ? 'true' : 'x', pick: 0 }; if (f.verdict === 'correct') S.quiz.score++; save(); } });
-    bar([{ label: 'Skip', on: next }, { label: 'Finish ▶', primary: true, on: next }]);
+    wireExplain('m', (f) => { if (!S.quiz.fb) { S.quiz.fb = { key: f.verdict === 'correct' ? 'true' : 'x', pick: 0 }; if (f.verdict === 'correct') S.quiz.score++; save(); } }, 'q5');
+    bar([{ label: 'Skip', on: next }, { label: 'Finish ▶', primary: true, disabled: !S.explain.q5, on: next }]);
     return;
   }
   if (!fb) {
@@ -602,7 +609,9 @@ screens.about = () => {
       <tr><td>Learner</td><td>L1 Rural, regional-language medium, parent's phone</td></tr>
       <tr><td>Constraint</td><td>C3 Mobile-first, one-handed</td></tr>
     </tbody></table>
-    <p class="mr">The simulation solves the pendulum equation step by step (RK4). Bob mass is not in the equation — just like in nature (no air drag).</p>`;
+    <p class="mr">The simulation solves the pendulum equation step by step (RK4). Bob mass is not in the equation — just like in nature (no air drag).</p>
+    <div class="card"><h2 style="margin-top:0">Learning log (on this phone)</h2>
+    <p class="mr" style="margin:0">${['run', 'hypothesis', 'revise', 'unfair', 'contradict', 'hint', 'predict', 'autoFair', 'quiz', 'detour', 'explain', 'readAloud'].map((t) => `${t}: <b>${S.log.filter((l) => l.type === t).length}</b>`).join(' · ')}</p></div>`;
   bar([{ label: '◀ Back', primary: true, on: () => go(S.prev || 'home') }]);
 };
 
@@ -616,5 +625,13 @@ function render() {
   const cur = STEP[S.screen] ?? -1;
   $('#steps').innerHTML = ['Learn', 'Guess', 'Test', 'Think', 'Check'].map((n, i) => `<li class="${i === cur ? 'on' : i < cur ? 'past' : ''}" title="${n}">${i === cur ? `${i + 1} · ${n}` : i < cur ? '✓' : i + 1}</li>`).join('');
 }
+function speak() {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const parts = [...document.querySelectorAll('#app h1, #app h2, #app .key, #app .ok, #app .warn, #app .bad, #app .result')].slice(0, 3).map((e) => e.innerText);
+  const u = new SpeechSynthesisUtterance(parts.join('. ')); u.lang = 'en-IN'; u.rate = 0.9; speechSynthesis.speak(u);
+  log('readAloud', { screen: S.screen });
+}
+if ('speechSynthesis' in window) { const b = document.createElement('button'); b.id = 'speakBtn'; b.className = 'speak'; b.setAttribute('aria-label', 'Read this screen aloud'); b.textContent = '🔊'; b.onclick = speak; $('#top').insertBefore(b, $('#steps')); }
 $('#aboutLink').onclick = () => { if (S.screen !== 'about') S.prev = S.screen; go('about'); };
 render(); // resumes on the saved screen
