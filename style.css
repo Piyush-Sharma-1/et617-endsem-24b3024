@@ -93,8 +93,8 @@ mark { background: var(--yellow); padding: 0 4px; border: 2px solid var(--line);
 .btn:disabled { opacity: .45; box-shadow: none; }
 .btn.inline { width: 100%; margin: 0 0 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 #idfoot { position: fixed; left: 0; right: 0; bottom: var(--bar-h); height: var(--foot-h); text-align: center;
-  font: .8rem var(--pixel); color: var(--ink); background: var(--bg); line-height: var(--foot-h); z-index: 5; border-top: 2px solid var(--line); }
-.linkbtn { background: none; border: 0; color: var(--teal); font: 700 .8rem var(--pixel); text-decoration: underline; padding: 0 4px; min-height: 28px; }
+  font: .82rem system-ui, sans-serif; color: var(--ink); background: var(--bg); line-height: var(--foot-h); z-index: 5; border-top: 2px solid var(--line); }
+.linkbtn { background: none; border: 0; color: #0b6f68; font: 700 .82rem system-ui, sans-serif; text-decoration: underline; padding: 0 4px; min-height: 28px; }
 
 /* Lab */
 .labbox { padding: 8px; margin: 0 0 14px; }
