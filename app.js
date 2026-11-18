@@ -354,7 +354,7 @@ function ruleFeedback(v, raw) {
 
 /* 7. Check-up quiz: 5 tasks in 3 formats (MCQ, numeric, explanation), adaptive detours */
 const QUIZ = [
-  { id: 'q1', type: 'mcq', fix: 'm', text: 'Sunita\'s pendulum has a 50 cm string and a 100 g bob. She changes to a 400 g bob (same string, same angle). The period will be…',
+  { id: 'q1', type: 'mcq', fix: 'm', text: 'Meena\'s pendulum has a 50 cm string and a 100 g bob. She changes to a 400 g bob (same string, same angle). The period will be…',
     opts: [['shorter', 'M1'], ['the same', true], ['longer', 'X']],
     fb: { true: 'Correct! Mass does not change the period — just like in your experiment.',
           M1: 'This is a common idea: “heavy = fast”. But your own runs showed the period stayed the same when only the mass changed. Let us test it again.',
