@@ -238,17 +238,20 @@ function labBar(running) {
 function drawPendulum(th, trail) {
   const cv = $('#cv'); if (!cv) return; const c = cv.getContext('2d');
   const W = cv.width, H = cv.height, px = W / 2, py = 34;
-  const len = 60 + (S.cfg.L - 20) / 180 * 290;  // 20–200 cm onto the canvas
-  const r = 13 + Math.sqrt(S.cfg.m / 500) * 19;   // heavier bob drawn bigger
+  const len = 100 + (S.cfg.L - 20) / 180 * 230;  // 20–200 cm onto the canvas
+  const r = 14 + Math.sqrt(S.cfg.m / 500) * 18;   // heavier bob drawn bigger
   const pos = (a) => [px + len * Math.sin(a), py + len * Math.cos(a)];
   const [x, y] = pos(th);
   c.clearRect(0, 0, W, H);
-  // Protractor around the pivot (tool for reading the angle)
-  c.save(); c.strokeStyle = 'rgba(180,83,9,.55)'; c.fillStyle = '#b45309'; c.lineWidth = 2; c.font = 'bold 15px system-ui'; c.textAlign = 'center';
-  c.beginPath(); c.arc(px, py, 70, Math.PI / 2 - 0.56, Math.PI / 2 + 0.56); c.stroke();
-  for (let d = -30; d <= 30; d += 5) { const a = d * Math.PI / 180, r2 = d % 10 === 0 ? 84 : 77;
-    c.beginPath(); c.moveTo(px + 70 * Math.sin(a), py + 70 * Math.cos(a)); c.lineTo(px + r2 * Math.sin(a), py + r2 * Math.cos(a)); c.stroke();
-    if (d % 10 === 0 && d) c.fillText(Math.abs(d) + '°', px + 100 * Math.sin(a), py + 100 * Math.cos(a) + 5); }
+  // Protractor ticks around the pivot + an angle wedge showing the release angle (tool for reading A)
+  c.save(); c.strokeStyle = 'rgba(180,83,9,.6)'; c.lineWidth = 2;
+  for (let d = -30; d <= 30; d += 5) { const a = d * Math.PI / 180, r2 = d % 10 === 0 ? 66 : 58;
+    c.beginPath(); c.moveTo(px + 48 * Math.sin(a), py + 48 * Math.cos(a)); c.lineTo(px + r2 * Math.sin(a), py + r2 * Math.cos(a)); c.stroke(); }
+  if (!trail) {
+    c.fillStyle = 'rgba(245,158,11,.28)'; c.beginPath(); c.moveTo(px, py); c.arc(px, py, 48, Math.PI / 2 - th, Math.PI / 2, th < 0); c.closePath(); c.fill();
+    c.fillStyle = '#b45309'; c.font = 'bold 22px system-ui'; c.textAlign = 'left';
+    c.fillText(S.cfg.A + '°', px + 74 * Math.sin(th / 2) + 14, py + 74 * Math.cos(th / 2) + 8);
+  }
   c.restore();
   // Ceiling + vertical reference line
   c.fillStyle = '#64748b'; c.fillRect(px - 150, py - 14, 300, 14);
