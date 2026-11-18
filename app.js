@@ -554,7 +554,7 @@ function render() {
   // Progress stepper in the top bar: Learn → Guess → Test → Think → Check
   const STEP = { home: -1, about: -1, learn: 0, choose: 1, hypothesis: 1, lab: 2, detour: 2, compare: 3, quiz: 4, summary: 5 };
   const cur = STEP[S.screen] ?? -1;
-  $('#steps').innerHTML = ['Learn', 'Guess', 'Test', 'Think', 'Check'].map((n, i) => `<li class="${i === cur ? 'on' : i < cur ? 'past' : ''}">${n}</li>`).join('');
+  $('#steps').innerHTML = ['Learn', 'Guess', 'Test', 'Think', 'Check'].map((n, i) => `<li class="${i === cur ? 'on' : i < cur ? 'past' : ''}" title="${n}">${i === cur ? `${i + 1} · ${n}` : i < cur ? '✓' : i + 1}</li>`).join('');
 }
 $('#aboutLink').onclick = () => { if (S.screen !== 'about') S.prev = S.screen; go('about'); };
 render(); // resumes on the saved screen

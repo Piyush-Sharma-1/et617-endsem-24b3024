@@ -13,9 +13,9 @@ html, body { margin: 0; background: var(--bg); color: var(--ink);
 /* Top bar with progress stepper */
 #top { position: sticky; top: 0; z-index: 6; background: linear-gradient(135deg, #0f766e, #0d9488); color: #fff;
   height: var(--top-h); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; box-shadow: var(--shadow); }
-#top .brand { font-weight: 800; letter-spacing: .01em; font-size: 1.02rem; }
+#top .brand { font-weight: 800; font-size: 1rem; white-space: nowrap; }
 #steps { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
-#steps li { font-size: .68rem; font-weight: 700; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; background: rgba(255,255,255,.16); color: rgba(255,255,255,.75); }
+#steps li { font-size: .7rem; font-weight: 800; text-transform: uppercase; padding: 4px 8px; min-width: 24px; text-align: center; border-radius: 999px; background: rgba(255,255,255,.16); color: rgba(255,255,255,.75); }
 #steps li.on { background: #fff; color: var(--brand); }
 #steps li.past { background: rgba(255,255,255,.32); color: #fff; }
 
