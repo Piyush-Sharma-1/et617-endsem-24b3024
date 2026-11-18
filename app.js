@@ -93,69 +93,91 @@ function runsTable(highlight) {
 /* ================= SCREENS ================= */
 const screens = {};
 
+/* Small pendulum drawing used on Home and Learn. The <g class="pend"> rotates about the pivot (160,24). */
+function pendSvg(cls, labels) {
+  return `<svg viewBox="0 0 320 210" role="img" aria-label="A swinging pendulum${labels ? ' with length, mass and angle labelled' : ''}">
+    <rect x="70" y="12" width="180" height="12" rx="4" fill="#64748b"/>
+    <line x1="160" y1="24" x2="160" y2="196" stroke="#b6c6c1" stroke-dasharray="5 6"/>
+    ${labels ? '<path d="M160 74 A50 50 0 0 1 181 69" fill="none" stroke="#b45309" stroke-width="3" transform="rotate(-24 160 24)"/>' : ''}
+    <g class="pend ${cls}" style="transform-origin:160px 24px">
+      <line x1="160" y1="24" x2="160" y2="170" stroke="#14201d" stroke-width="2.5"/>
+      <circle cx="160" cy="170" r="20" fill="url(#bobg)"/>
+      ${labels ? '<text x="168" y="110" font-size="14" font-weight="700" fill="#14201d">L</text><text x="160" y="175" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">m</text>' : ''}
+    </g>
+    ${labels ? '<text x="96" y="90" font-size="14" font-weight="700" fill="#b45309">A</text>' : ''}
+    <defs><radialGradient id="bobg" cx=".35" cy=".35"><stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#0f766e"/></radialGradient></defs>
+  </svg>`;
+}
+
 /* 1. Home */
 screens.home = () => {
-  const started = S.runs.length || Object.keys(S.done).length;
+  const n = Object.keys(S.done).length, started = S.runs.length || n;
   $('#app').innerHTML = `
-    <p class="step">Pendulum Lab · लोलक प्रयोगशाळा</p>
+    <div class="hero">${pendSvg('loop')}</div>
+    <p class="step">लोलक प्रयोगशाळा · Pendulum Lab</p>
     <h1>What decides how fast a pendulum swings?</h1>
-    <div class="card"><p>Namaskar! 🙏 Think of a <b>jhoka</b> (झोका) in your village. Some swings go back and forth quickly, some slowly.</p>
-    <p>In this lab <b>we</b> will guess, test and find out the reason ourselves. It takes about 20 minutes, and you can stop any time — your work is saved on this phone.</p></div>
-    ${started ? `<div class="key">Welcome back! You have done ${Object.keys(S.done).length} of 3 experiments.</div>` : ''}`;
+    <div class="card"><p>Namaskar! 🙏 Think of a <b>jhoka</b> (झोका) in your village. Some swing back and forth quickly, some slowly. <b>Why?</b></p>
+    <p style="margin:0">Today <b>we</b> will guess, test and find out ourselves — like real scientists. About 20 minutes. Your work is saved on this phone, so you can stop any time.</p></div>
+    ${started ? `<div class="key">Welcome back! You have finished <b>${n} of 3</b> experiments.</div>` : ''}`;
   bar(started
     ? [{ label: 'Start over', on: () => { if (confirm('Clear your saved work and start again?')) { S = fresh(); save(); go('home'); } } },
        { label: 'Continue ▶', primary: true, on: () => go(S.resume || 'choose') }]
-    : [{ label: 'Start ▶', primary: true, on: () => go('learn') }]);
+    : [{ label: "Let's start ▶", primary: true, on: () => go('learn') }]);
 };
 
-/* 2. Concept */
+/* 2. Concept — tap to watch exactly one oscillation */
 screens.learn = () => {
   $('#app').innerHTML = `
-    <p class="step">Step 1 of 4 · Words we need</p>
+    <p class="step">Learn · words we need</p>
     <h2>Let us meet the pendulum</h2>
-    <svg viewBox="0 0 320 200" role="img" aria-label="A pendulum with string length, bob mass and swing angle labelled" style="width:100%;background:#fff;border:1px solid var(--line);border-radius:12px">
-      <line x1="60" y1="20" x2="260" y2="20" stroke="#5b6763" stroke-width="4"/>
-      <line x1="160" y1="20" x2="160" y2="170" stroke="#c3cbc8" stroke-dasharray="5 5"/>
-      <line x1="160" y1="20" x2="225" y2="155" stroke="#1c2421" stroke-width="2"/>
-      <circle cx="225" cy="155" r="16" fill="#0f766e"/>
-      <path d="M160 70 A50 50 0 0 0 182 65" fill="none" stroke="#b45309" stroke-width="3"/>
-      <text x="170" y="95" font-size="13" fill="#b45309">angle A</text>
-      <text x="200" y="80" font-size="13" fill="#1c2421">length L</text>
-      <text x="245" y="185" font-size="13" fill="#0f766e">bob, mass m</text>
-    </svg>
-    <div class="key"><b>One oscillation</b> = the bob goes from one side, to the other side, and <b>back again</b>.<br>
-    <b>Period</b> (आवर्तकाल) = the time for one oscillation, in seconds.</div>
-    <p>We will change three things, <mark>one at a time</mark>:</p>
-    <div class="card">1. <b>Length</b> of string · <span class="mr">लांबी</span><br>2. <b>Mass</b> of the bob · <span class="mr">वस्तुमान</span><br>3. <b>Angle</b> we release it from · <span class="mr">विस्तार</span></div>
-    <p>One swing is too quick to time with a stopwatch. So, like real scientists, <b>we time 10 swings and divide by 10</b>. The lab does this for you.</p>`;
+    <div class="hero">${pendSvg('', true)}</div>
+    <button class="btn inline" id="oneOsc">▶ Show me ONE oscillation</button>
+    <div class="key" id="oscTxt"><b>One oscillation</b> = from one side → to the other side → <b>back again</b>.<br>
+    <b>Period</b> <span class="mr">(आवर्तकाल)</span> = time for one oscillation, in seconds.</div>
+    <p>We can change three things:</p>
+    <div class="vocab">
+      <div><b>L · length</b><span class="mr">दोरीची लांबी</span><br>How long the string is (cm)</div>
+      <div><b>m · mass</b><span class="mr">वस्तुमान</span><br>How heavy the bob is (g)</div>
+      <div><b>A · angle</b><span class="mr">विस्तार</span><br>How far we pull it before letting go (°)</div>
+      <div><b>⏱ 10 swings</b><span class="mr">१० आंदोलने</span><br>One swing is too quick to time, so we time 10 and divide by 10</div>
+    </div>`;
+  let count = 0;
+  $('#oneOsc').onclick = () => {
+    const g = document.querySelector('.hero .pend'); g.classList.remove('go'); void g.getBBox(); g.classList.add('go');
+    count++; $('#oneOsc').textContent = `▶ Again (watched ${count})`;
+    setTimeout(() => { $('#oscTxt').classList.add('pop'); }, 1800);
+  };
   bar([{ label: '◀ Back', on: () => go('home') }, { label: 'I am ready ▶', primary: true, on: () => go('choose') }]);
 };
 
 /* 3. Choose a question */
+const VICON = { m: '⚖️', A: '📐', L: '📏' };
 screens.choose = () => {
-  const order = ['m', 'A', 'L'];
+  const order = ['m', 'A', 'L'], n = Object.keys(S.done).length;
   $('#app').innerHTML = `
-    <p class="step">Step 2 of 4 · Pick a question</p>
+    <p class="step">Guess · pick a question</p>
     <h2>Which question shall we test?</h2>
-    <div class="choices">${order.map((k) => `<button class="choice ${S.done[k] ? 'done' : ''}" data-k="${k}">Does the <b>${VARS[k].name}</b> change the period?<span class="sub">${VARS[k].mr}</span></button>`).join('')}</div>
-    ${Object.keys(S.done).length >= 3 ? '<div class="ok">You tested all three! Now try the check-up.</div>' : '<p class="mr">Tip: start with the bob mass.</p>'}`;
+    <div class="progress" aria-label="${n} of 3 done"><i style="width:${n / 3 * 100}%"></i></div>
+    <div class="choices">${order.map((k) => `<button class="choice ${S.done[k] ? 'done' : ''}" data-k="${k}"><span class="ic">${VICON[k]}</span><span>Does the <b>${VARS[k].name}</b> change the period?<span class="sub">${VARS[k].mr}</span></span></button>`).join('')}</div>
+    ${n >= 3 ? '<div class="ok pop">🎉 You tested all three! Now try the check-up.</div>' : '<p class="mr">Tip: start with the bob mass.</p>'}`;
   document.querySelectorAll('.choice').forEach((el) => { el.onclick = () => { S.v = el.dataset.k; S.hyp = null; S.hint = 0; log('question', { v: S.v }); go('hypothesis'); }; });
   bar([{ label: '◀ Back', on: () => go('learn') },
-       { label: 'Check-up ▶', primary: true, disabled: Object.keys(S.done).length < 3, on: () => go('quiz') }]);
+       { label: 'Check-up ▶', primary: true, disabled: n < 3, on: () => go('quiz') }]);
 };
 
 /* 4. Hypothesis */
+const HICON = { less: '🐇', same: '⚖️', more: '🐢' };
 screens.hypothesis = () => {
   const V = VARS[S.v];
   const revising = S.hypHistory.some((h) => h.v === S.v);
   $('#app').innerHTML = `
-    <p class="step">Step 3 of 4 · ${revising ? 'Change your guess' : 'Make a guess'}</p>
-    <h2>If we make the <mark>${V.name}</mark> bigger, one swing will take…</h2>
+    <p class="step">Guess · ${revising ? 'change your guess' : 'make a guess'}</p>
+    <h2>${VICON[S.v]} If we make the <mark>${V.name}</mark> bigger, one swing will take…</h2>
     ${revising ? `<div class="warn">Your earlier guess was “${EFFECT_TXT[S.hypHistory.filter((h) => h.v === S.v).pop().hyp]}”. Look at your data and choose again.</div>` : ''}
-    <div class="choices">${['less', 'same', 'more'].map((h) => `<button class="choice" data-h="${h}" aria-pressed="${S.hyp === h}">${EFFECT_TXT[h]}</button>`).join('')}</div>
-    <p class="mr">There is no wrong guess here. A guess is called a <b>hypothesis</b> (गृहीतक). We will test it.</p>`;
+    <div class="choices">${['less', 'same', 'more'].map((h) => `<button class="choice" data-h="${h}" aria-pressed="${S.hyp === h}"><span class="ic">${HICON[h]}</span>${EFFECT_TXT[h]}</button>`).join('')}</div>
+    <p class="mr">There is no wrong guess. A guess we can test is called a <b>hypothesis</b> (गृहीतक).</p>`;
   document.querySelectorAll('.choice').forEach((el) => { el.onclick = () => { S.hyp = el.dataset.h; save(); render(); }; });
-  bar([{ label: '◀ Back', on: () => go('choose') }, { label: 'Test it ▶', primary: true, disabled: !S.hyp, on: () => {
+  bar([{ label: '◀ Back', on: () => go('choose') }, { label: 'Test it 🔬', primary: true, disabled: !S.hyp, on: () => {
     S.hypHistory.push({ v: S.v, hyp: S.hyp, t: Date.now() });
     // Diagnose the two persona misconceptions from the guess itself
     if (S.v === 'm' && S.hyp === 'less') S.mis.M1++;
@@ -165,30 +187,45 @@ screens.hypothesis = () => {
   } }]);
 };
 
-/* 5. Lab */
+/* 5. Lab — drag the bob, ruler + protractor, stopwatch, predict each run, live graph */
 let anim = null;
 screens.lab = () => {
   const V = VARS[S.v];
   const ctrl = (k) => { const X = VARS[k]; return `
     <div class="ctrl ${k === S.v ? 'focus' : ''}">
-      <label for="r${k}"><span>${k === S.v ? '👉 ' : ''}${X.name} <span class="mr">${X.mr}</span></span><span id="o${k}">${S.cfg[k]} ${X.unit}</span></label>
+      <label for="r${k}"><span>${k === S.v ? '👉 ' : ''}${X.name} <span class="mr">${X.mr}</span></span><span class="val" id="o${k}">${S.cfg[k]} ${X.unit}</span></label>
       <div class="row"><button class="pm" data-k="${k}" data-d="-1" aria-label="Decrease ${X.name}">−</button>
       <input type="range" id="r${k}" min="${X.min}" max="${X.max}" step="${X.step}" value="${S.cfg[k]}">
       <button class="pm" data-k="${k}" data-d="1" aria-label="Increase ${X.name}">+</button></div>
     </div>`; };
+  const msg = S.lastMsg; S.lastMsg = null;
   $('#app').innerHTML = `
-    <p class="step">Step 4 of 4 · Experiment · testing ${V.name}</p>
-    <canvas id="cv" width="640" height="360" aria-label="Pendulum animation"></canvas>
-    <div class="watch"><span>⏱ <span id="tw">0.00</span> s</span><span>swings: <span id="sw">0</span>/10</span></div>
-    <div class="key" style="font-size:.95rem">Fair test: change <b>only the ${V.name}</b>. Keep the other two the same.</div>
+    <p class="step">Test · ${VICON[S.v]} does the ${V.name} matter?</p>
+    ${msg ? `<div class="result pop">${msg}</div>` : ''}
+    <div class="labbox">
+      <canvas id="cv" width="640" height="420" aria-label="Pendulum. Drag the bob to set the angle."></canvas>
+      <div class="watch"><span>⏱ <span id="tw">0.00</span> s</span><span class="dots" id="dots">${'<i></i>'.repeat(10)}</span></div>
+      <p class="draghint">✋ Drag the bob to set the angle · ruler on the string = 10 cm marks</p>
+    </div>
+    ${S.runs.length ? `<p style="margin:0 0 6px;font-weight:700">Before you release: compared to Run ${S.runs.length}, this swing will be…</p>
+    <div class="chips">${['less', 'same', 'more'].map((h) => `<button class="chip" data-p="${h}" aria-pressed="${S.pred === h}">${HICON[h]} ${h === 'less' ? 'faster' : h === 'same' ? 'same' : 'slower'}</button>`).join('')}</div>` : ''}
+    <div class="key" style="font-size:.93rem">Fair test: change <b>only the ${V.name}</b>. Keep the other two the same.</div>
     ${ctrl(S.v)}${['L', 'm', 'A'].filter((k) => k !== S.v).map(ctrl).join('')}
-    <h2>Your results</h2>
-    ${runsTable(true)}
-    <p class="mr">Yellow cells = what you changed from the run before.</p>`;
+    <div class="card"><h2 style="margin-top:0">📈 Period vs ${V.name}</h2><canvas id="gr" width="640" height="300" aria-label="Graph of your runs"></canvas>
+    <p class="mr" style="margin:6px 0 0">Each dot is one run where only the ${V.name} was different.</p></div>
+    <div class="card"><h2 style="margin-top:0">📋 Your results</h2>${runsTable(true)}<p class="mr" style="margin:6px 0 0">Yellow = what you changed from the run before.</p></div>`;
   const setVal = (k, val) => { const X = VARS[k]; S.cfg[k] = Math.max(X.min, Math.min(X.max, val)); $('#r' + k).value = S.cfg[k]; $('#o' + k).textContent = S.cfg[k] + ' ' + X.unit; save(); drawStill(); };
   ['L', 'm', 'A'].forEach((k) => { $('#r' + k).oninput = (e) => setVal(k, +e.target.value); });
   document.querySelectorAll('.pm').forEach((b) => { b.onclick = () => setVal(b.dataset.k, S.cfg[b.dataset.k] + (+b.dataset.d) * VARS[b.dataset.k].step); });
-  drawStill();
+  document.querySelectorAll('.chip').forEach((b) => { b.onclick = () => { S.pred = b.dataset.p; save(); document.querySelectorAll('.chip').forEach((x) => x.setAttribute('aria-pressed', x === b)); }; });
+  // Drag the bob: natural mapping — pull it sideways to set the release angle (snaps to 5°)
+  const cv = $('#cv'); let dragging = false;
+  const angleFrom = (e) => { const r = cv.getBoundingClientRect(); const x = (e.clientX - r.left) * cv.width / r.width - cv.width / 2; const y = (e.clientY - r.top) * cv.height / r.height - 34;
+    return Math.round(Math.abs(Math.atan2(x, Math.max(y, 1))) * 180 / Math.PI / 5) * 5; };
+  cv.onpointerdown = (e) => { if (anim) return; dragging = true; cv.setPointerCapture(e.pointerId); setVal('A', angleFrom(e)); };
+  cv.onpointermove = (e) => { if (dragging) setVal('A', angleFrom(e)); };
+  cv.onpointerup = cv.onpointercancel = () => { dragging = false; };
+  drawStill(); drawGraph();
   labBar();
 };
 function labBar(running) {
@@ -198,32 +235,75 @@ function labBar(running) {
             : { label: '▶ Release & time', primary: true, on: startRun },
   ]);
 }
-function drawPendulum(th) {
+function drawPendulum(th, trail) {
   const cv = $('#cv'); if (!cv) return; const c = cv.getContext('2d');
-  const W = cv.width, H = cv.height, px = W / 2, py = 20;
-  const len = 40 + (S.cfg.L - 20) / 180 * 270; // scale 20–200 cm onto the canvas
-  const r = 10 + Math.sqrt(S.cfg.m / 500) * 16;  // heavier bob drawn bigger
-  const x = px + len * Math.sin(th), y = py + len * Math.cos(th);
+  const W = cv.width, H = cv.height, px = W / 2, py = 34;
+  const len = 60 + (S.cfg.L - 20) / 180 * 290;  // 20–200 cm onto the canvas
+  const r = 13 + Math.sqrt(S.cfg.m / 500) * 19;   // heavier bob drawn bigger
+  const pos = (a) => [px + len * Math.sin(a), py + len * Math.cos(a)];
+  const [x, y] = pos(th);
   c.clearRect(0, 0, W, H);
-  c.fillStyle = '#5b6763'; c.fillRect(px - 120, py - 8, 240, 8);
-  c.setLineDash([6, 6]); c.strokeStyle = '#c3cbc8'; c.beginPath(); c.moveTo(px, py); c.lineTo(px, py + len + 20); c.stroke(); c.setLineDash([]);
-  c.strokeStyle = '#1c2421'; c.lineWidth = 2; c.beginPath(); c.moveTo(px, py); c.lineTo(x, y); c.stroke();
-  c.fillStyle = '#0f766e'; c.beginPath(); c.arc(x, y, r, 0, 2 * Math.PI); c.fill();
-  c.fillStyle = '#1c2421'; c.font = '20px system-ui'; c.fillText(`${S.cfg.L} cm · ${S.cfg.m} g · ${S.cfg.A}°`, 12, H - 12);
+  // Protractor around the pivot (tool for reading the angle)
+  c.save(); c.strokeStyle = 'rgba(180,83,9,.55)'; c.fillStyle = '#b45309'; c.lineWidth = 2; c.font = 'bold 15px system-ui'; c.textAlign = 'center';
+  c.beginPath(); c.arc(px, py, 70, Math.PI / 2 - 0.56, Math.PI / 2 + 0.56); c.stroke();
+  for (let d = -30; d <= 30; d += 5) { const a = d * Math.PI / 180, r2 = d % 10 === 0 ? 84 : 77;
+    c.beginPath(); c.moveTo(px + 70 * Math.sin(a), py + 70 * Math.cos(a)); c.lineTo(px + r2 * Math.sin(a), py + r2 * Math.cos(a)); c.stroke();
+    if (d % 10 === 0 && d) c.fillText(Math.abs(d) + '°', px + 100 * Math.sin(a), py + 100 * Math.cos(a) + 5); }
+  c.restore();
+  // Ceiling + vertical reference line
+  c.fillStyle = '#64748b'; c.fillRect(px - 150, py - 14, 300, 14);
+  c.strokeStyle = '#475569'; c.lineWidth = 2; for (let i = -150; i < 150; i += 14) { c.beginPath(); c.moveTo(px + i, py - 14); c.lineTo(px + i + 10, py - 26); c.stroke(); }
+  c.setLineDash([6, 7]); c.strokeStyle = '#b6c6c1'; c.lineWidth = 2; c.beginPath(); c.moveTo(px, py); c.lineTo(px, H - 30); c.stroke(); c.setLineDash([]);
+  // Motion trail (ghost bobs)
+  (trail || []).forEach((a, i, arr) => { const [tx, ty] = pos(a); c.fillStyle = `rgba(20,184,166,${(i + 1) / arr.length * 0.22})`; c.beginPath(); c.arc(tx, ty, r * 0.8, 0, 7); c.fill(); });
+  // String with ruler marks every 10 cm
+  c.strokeStyle = '#14201d'; c.lineWidth = 3; c.beginPath(); c.moveTo(px, py); c.lineTo(x, y); c.stroke();
+  const nx = Math.cos(th), ny = -Math.sin(th); c.lineWidth = 2;
+  for (let k = 10; k < S.cfg.L; k += 10) { const f = k / S.cfg.L, tx = px + (x - px) * f, ty = py + (y - py) * f, s = k % 50 === 0 ? 10 : 5;
+    c.beginPath(); c.moveTo(tx - nx * s, ty - ny * s); c.lineTo(tx + nx * s, ty + ny * s); c.stroke(); }
+  // Bob
+  c.fillStyle = 'rgba(0,0,0,.12)'; c.beginPath(); c.ellipse(x + 4, y + r + 6, r * 0.9, 5, 0, 0, 7); c.fill();
+  const g = c.createRadialGradient(x - r / 3, y - r / 3, 2, x, y, r); g.addColorStop(0, '#5eead4'); g.addColorStop(1, '#0f766e');
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+  c.fillStyle = '#fff'; c.font = 'bold 14px system-ui'; c.textAlign = 'center'; c.fillText(S.cfg.m + 'g', x, y + 5);
+  c.fillStyle = '#14201d'; c.font = 'bold 18px system-ui'; c.textAlign = 'left'; c.fillText(`L = ${S.cfg.L} cm`, 14, H - 12);
+  c.textAlign = 'right'; c.fillText(`A = ${S.cfg.A}°`, W - 14, H - 12);
 }
 function drawStill() { drawPendulum(S.cfg.A * Math.PI / 180); }
+// Graph: period against the tested variable, only runs that form fair tests with the current settings
+function drawGraph() {
+  const cv = $('#gr'); if (!cv) return; const c = cv.getContext('2d'), V = VARS[S.v];
+  const W = cv.width, H = cv.height, l = 64, r = 20, t = 20, b = 52;
+  const others = ['L', 'm', 'A'].filter((k) => k !== S.v);
+  const pts = S.runs.filter((run) => others.every((k) => run[k] === S.cfg[k])).map((run) => [run[S.v], run.T]);
+  const yMax = Math.max(3, ...pts.map((p) => p[1] * 1.15));
+  const X = (v) => l + (v - V.min) / (V.max - V.min) * (W - l - r), Y = (v) => H - b - v / yMax * (H - t - b);
+  c.clearRect(0, 0, W, H); c.strokeStyle = '#d3e0dc'; c.fillStyle = '#5b6b66'; c.font = '15px system-ui'; c.lineWidth = 1;
+  for (let v = 0; v <= yMax; v += 0.5) { c.beginPath(); c.moveTo(l, Y(v)); c.lineTo(W - r, Y(v)); c.stroke(); c.textAlign = 'right'; c.fillText(v.toFixed(1), l - 8, Y(v) + 5); }
+  c.textAlign = 'center';
+  for (let i = 0; i <= 4; i++) { const v = V.min + (V.max - V.min) * i / 4; c.fillText(Math.round(v), X(v), H - b + 22); }
+  c.fillStyle = '#14201d'; c.font = 'bold 15px system-ui'; c.fillText(`${V.name} (${V.unit})`, (l + W - r) / 2, H - 8);
+  c.save(); c.translate(16, (t + H - b) / 2); c.rotate(-Math.PI / 2); c.fillText('period (s)', 0, 0); c.restore();
+  if (!pts.length) { c.fillStyle = '#5b6b66'; c.font = '16px system-ui'; c.fillText('Your runs will appear here', (l + W) / 2, (t + H - b) / 2); return; }
+  const sorted = [...pts].sort((p, q) => p[0] - q[0]);
+  c.strokeStyle = 'rgba(15,118,110,.5)'; c.lineWidth = 3; c.beginPath(); sorted.forEach((p, i) => (i ? c.lineTo(X(p[0]), Y(p[1])) : c.moveTo(X(p[0]), Y(p[1])))); c.stroke();
+  pts.forEach((p, i) => { const last = i === pts.length - 1; c.fillStyle = last ? '#f59e0b' : '#0f766e'; c.beginPath(); c.arc(X(p[0]), Y(p[1]), last ? 10 : 7, 0, 7); c.fill(); });
+}
 function startRun() {
   const L = S.cfg.L / 100; let th = S.cfg.A * Math.PI / 180, w = 0, t = 0, count = 0, prevW = 0, last = performance.now();
-  const target = timeFor10(S.cfg.L, S.cfg.A);
+  const target = timeFor10(S.cfg.L, S.cfg.A), trail = [];
   anim = { target, stop: false };
   labBar(true);
+  document.querySelectorAll('.chip').forEach((b) => { b.disabled = true; });
   const tick = (now) => {
     if (!anim || anim.stop) return;
     let dtReal = Math.min(0.05, (now - last) / 1000); last = now;
     while (dtReal > 0) { const dt = Math.min(0.002, dtReal); [th, w] = stepRK4(th, w, L, dt); t += dt; dtReal -= dt;
       if (prevW > 0 && w <= 0 && th > 0) count++; prevW = w; }
-    drawPendulum(th);
-    $('#tw').textContent = t.toFixed(2); $('#sw').textContent = Math.min(count, 10);
+    trail.push(th); if (trail.length > 14) trail.shift();
+    drawPendulum(th, trail);
+    $('#tw').textContent = t.toFixed(2);
+    document.querySelectorAll('#dots i').forEach((d, i) => d.classList.toggle('on', i < count));
     if (count >= 10 || t >= target) finishRun(false); else requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
@@ -231,7 +311,17 @@ function startRun() {
 function finishRun(skipped) {
   if (!anim) return; const t10 = anim.target; anim.stop = true; anim = null;
   const run = { L: S.cfg.L, m: S.cfg.m, A: S.cfg.A, t10, T: t10 / 10, v: S.v };
-  S.runs.push(run); log('run', { ...run, skipped });
+  const prev = S.runs[S.runs.length - 1];
+  S.runs.push(run);
+  let msg = `<b>Run ${S.runs.length}</b>: 10 swings took <b>${t10.toFixed(2)} s</b> → period = ${t10.toFixed(2)} ÷ 10 = <b>${run.T.toFixed(2)} s</b>`;
+  if (prev && S.pred) {
+    const rel = (run.T - prev.T) / prev.T, actual = Math.abs(rel) < 0.03 ? 'same' : rel < 0 ? 'less' : 'more';
+    const word = { less: 'faster', same: 'the same', more: 'slower' };
+    msg += `<br>${actual === S.pred ? '✅' : '🤔'} You predicted <b>${word[S.pred]}</b> — it was <b>${word[actual]}</b> than Run ${S.runs.length - 1}.`;
+    log('predict', { pred: S.pred, actual });
+  }
+  S.pred = null; S.lastMsg = msg;
+  log('run', { ...run, skipped });
   save(); render();
 }
 
@@ -261,7 +351,7 @@ screens.compare = () => {
     } else if (eff === S.hyp) {
       S.done[S.v] = true; save();
       log('confirmed', { v: S.v, eff });
-      html += `<div class="ok"><b>Your data agrees with your guess!</b> Making the ${V.name} bigger → one swing takes ${EFFECT_TXT[eff]}.</div>
+      html += `<div class="ok pop"><span class="big">🎉</span> <b>Your data agrees with your guess!</b> Making the ${V.name} bigger → one swing takes ${EFFECT_TXT[eff]}.</div>
         ${S.v === 'L' ? '<p>Look closely: did the period double when the length doubled? Try 25 cm and 100 cm (4 times longer). What happens to the period?</p>' : ''}
         ${explainBox()}`;
       buttons.push({ label: 'Next question ▶', primary: true, on: () => go(Object.keys(S.done).length >= 3 ? 'quiz' : 'choose') });
@@ -383,10 +473,10 @@ screens.quiz = () => {
   let body = `<p class="step">Check-up · question ${S.quiz.i + 1} of ${QUIZ.length}</p>
     <div class="progress"><i style="width:${S.quiz.i / QUIZ.length * 100}%"></i></div>
     <h2>${q.text}</h2>`;
-  if (q.type === 'mcq') body += `<div class="choices">${q.opts.map((o, i) => `<button class="choice" data-i="${i}" ${fb ? 'disabled' : ''} aria-pressed="${fb && fb.pick === i}">${o[0]}</button>`).join('')}</div>`;
+  if (q.type === 'mcq') body += `<div class="choices">${q.opts.map((o, i) => `<button class="choice ${fb ? (o[1] === true ? 'right' : fb.pick === i ? 'wrong' : '') : ''}" data-i="${i}" ${fb ? 'disabled' : ''}><span class="let">${'ABC'[i]}</span>${o[0]}</button>`).join('')}</div>`;
   if (q.type === 'num') body += `<input type="number" id="numIn" inputmode="decimal" step="0.1" placeholder="e.g. 1.5" ${fb ? 'disabled value="' + fb.pick + '"' : ''}><br><br>`;
   if (q.type === 'explain') { S.v = 'm'; body += explainBox(); }
-  if (fb) body += `<div class="${fb.key === true || fb.key === 'true' ? 'ok' : 'bad'}">${q.fb[fb.key]}</div>`;
+  if (fb) body += `<div class="pop ${fb.key === true || fb.key === 'true' ? 'ok' : 'bad'}">${q.fb[fb.key]}</div>`;
   $('#app').innerHTML = body;
   const answer = (key, pick) => {
     S.quiz.fb = { key: String(key), pick };
@@ -429,12 +519,13 @@ screens.detour = () => {
 /* 8. Summary */
 screens.summary = () => {
   const hyps = S.hypHistory.length, revised = S.log.filter((l) => l.type === 'revise').length;
-  $('#app').innerHTML = `<p class="step">Well done, scientist! 🎉</p>
+  $('#app').innerHTML = `<div class="hero">${pendSvg('loop')}</div>
+    <p class="step">Well done, scientist! 🎉</p>
     <h1>What we found out</h1>
-    <div class="ok"><b>Longer string → longer period.</b> 4× the length → 2× the period.<br>
-    <b>Heavier bob → same period.</b><br><b>Bigger (small) angle → same period.</b></div>
-    <div class="card">Check-up score: <b>${S.quiz.score} / ${QUIZ.length}</b><br>Experiments run: <b>${S.runs.length}</b><br>
-    Guesses made: <b>${hyps}</b> (changed your guess ${revised} time${revised === 1 ? '' : 's'})</div>
+    <div class="stats"><div><b>${S.quiz.score}/${QUIZ.length}</b>check-up</div><div><b>${S.runs.length}</b>runs</div><div><b>${revised}</b>guesses changed</div></div>
+    <div class="ok pop">📏 <b>Longer string → longer period.</b> 4× the length → 2× the period.<br>
+    ⚖️ <b>Heavier bob → same period.</b><br>📐 <b>Bigger (small) angle → same period.</b></div>
+    <div class="card">You made <b>${hyps}</b> guesses and tested every one with your own data.</div>
     ${S.mis.M1 || S.mis.M2 ? `<div class="key">You started with ${[S.mis.M1 ? '“heavier swings faster”' : '', S.mis.M2 ? '“bigger swing takes longer”' : ''].filter(Boolean).join(' and ')}. Your own data changed your mind — that is real science!</div>` : ''}
     <p class="mr">Tip: show this screen to your science teacher.</p>`;
   bar([{ label: 'Start over', on: () => { if (confirm('Clear your saved work?')) { S = fresh(); save(); go('home'); } } }, { label: 'Home', primary: true, on: () => go('home') }]);
@@ -459,6 +550,11 @@ screens.about = () => {
 function render() {
   if (anim) { anim.stop = true; anim = null; }
   (screens[S.screen] || screens.home)();
+  const app = $('#app'); app.classList.remove('enter'); void app.offsetWidth; app.classList.add('enter');
+  // Progress stepper in the top bar: Learn → Guess → Test → Think → Check
+  const STEP = { home: -1, about: -1, learn: 0, choose: 1, hypothesis: 1, lab: 2, detour: 2, compare: 3, quiz: 4, summary: 5 };
+  const cur = STEP[S.screen] ?? -1;
+  $('#steps').innerHTML = ['Learn', 'Guess', 'Test', 'Think', 'Check'].map((n, i) => `<li class="${i === cur ? 'on' : i < cur ? 'past' : ''}">${n}</li>`).join('');
 }
 $('#aboutLink').onclick = () => { if (S.screen !== 'about') S.prev = S.screen; go('about'); };
 render(); // resumes on the saved screen
