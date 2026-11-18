@@ -490,14 +490,15 @@ function ruleFeedback(v, raw) {
   const t = raw.toLowerCase();
   const sameWords = /(same|no change|not change|doesn'?t change|does not change|equal|nahi|नाही|सारखा|same time|no effect|doesn'?t matter)/;
   const dataWords = /(\d|run|table|data|period|time)/;
+  const negated = /(\bnot\b|n't|\bno\b|\bnahi\b|नाही|\bwrong\b)/.test(t); // "heavy is NOT faster" is the right idea
   if (v === 'm') {
-    if (/(heav\w*.*(fast|quick|less time))|(light\w*.*slow)/.test(t)) return { verdict: 'misconception', misconception: 'M1',
+    if (!negated && /(heav\w*.*(fast|quick|less time))|(light\w*.*slow)/.test(t)) return { verdict: 'misconception', misconception: 'M1',
       feedback: 'Many people think a heavier bob swings faster. Look at your runs: the mass changed but the period stayed the same. Gravity pulls every gram equally, so a heavy bob is not quicker.' };
-    if (sameWords.test(t)) return { verdict: dataWords.test(t) ? 'correct' : 'partial',
+    if (sameWords.test(t) || negated) return { verdict: dataWords.test(t) ? 'correct' : 'partial',
       feedback: dataWords.test(t) ? 'Well done! You used your data: the mass changed but the period stayed the same.' : 'Right idea: mass does not change the period. Now add your numbers, e.g. “at 100 g and 400 g the period was the same”.' };
   }
   if (v === 'A') {
-    if (/(big|large|more|wide).*(more time|slow|longer|takes more)/.test(t)) return { verdict: 'misconception', misconception: 'M2',
+    if (!negated && /(big|large|more|wide).*(more time|slow|longer|takes more)/.test(t)) return { verdict: 'misconception', misconception: 'M2',
       feedback: 'A bigger swing travels further, but it also moves faster. Look at your table: for small angles the period stayed almost the same.' };
     if (sameWords.test(t) || /(fast|speed)/.test(t)) return { verdict: dataWords.test(t) ? 'correct' : 'partial',
       feedback: dataWords.test(t) ? 'Good! The bob goes further but also faster, so the time stays almost the same for small swings.' : 'Right idea. Add numbers from your table to support it.' };
