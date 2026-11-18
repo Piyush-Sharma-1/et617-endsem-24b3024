@@ -211,7 +211,7 @@ screens.lab = () => {
     <div class="chips">${['less', 'same', 'more'].map((h) => `<button class="chip" data-p="${h}" aria-pressed="${S.pred === h}">${HICON[h]} ${h === 'less' ? 'faster' : h === 'same' ? 'same' : 'slower'}</button>`).join('')}</div>` : ''}
     <div class="key" style="font-size:.93rem">Fair test: change <b>only the ${V.name}</b>. Keep the other two the same.</div>
     ${ctrl(S.v)}${['L', 'm', 'A'].filter((k) => k !== S.v).map(ctrl).join('')}
-    <div class="card"><h2 style="margin-top:0">📈 Period vs ${V.name}</h2><canvas id="gr" width="640" height="300" aria-label="Graph of your runs"></canvas>
+    <div class="card"><h2 style="margin-top:0">📈 Period vs ${V.name}</h2><canvas id="gr" width="640" height="360" aria-label="Graph of your runs"></canvas>
     <p class="mr" style="margin:6px 0 0">Each dot is one run where only the ${V.name} was different.</p></div>
     <div class="card"><h2 style="margin-top:0">📋 Your results</h2>${runsTable(true)}<p class="mr" style="margin:6px 0 0">Yellow = what you changed from the run before.</p></div>`;
   const setVal = (k, val) => { const X = VARS[k]; S.cfg[k] = Math.max(X.min, Math.min(X.max, val)); $('#r' + k).value = S.cfg[k]; $('#o' + k).textContent = S.cfg[k] + ' ' + X.unit; save(); drawStill(); };
@@ -276,21 +276,21 @@ function drawStill() { drawPendulum(S.cfg.A * Math.PI / 180); }
 // Graph: period against the tested variable, only runs that form fair tests with the current settings
 function drawGraph() {
   const cv = $('#gr'); if (!cv) return; const c = cv.getContext('2d'), V = VARS[S.v];
-  const W = cv.width, H = cv.height, l = 64, r = 20, t = 20, b = 52;
+  const W = cv.width, H = cv.height, l = 84, r = 24, t = 24, b = 76;
   const others = ['L', 'm', 'A'].filter((k) => k !== S.v);
   const pts = S.runs.filter((run) => others.every((k) => run[k] === S.cfg[k])).map((run) => [run[S.v], run.T]);
   const yMax = Math.max(3, ...pts.map((p) => p[1] * 1.15));
   const X = (v) => l + (v - V.min) / (V.max - V.min) * (W - l - r), Y = (v) => H - b - v / yMax * (H - t - b);
-  c.clearRect(0, 0, W, H); c.strokeStyle = '#d3e0dc'; c.fillStyle = '#5b6b66'; c.font = '15px system-ui'; c.lineWidth = 1;
-  for (let v = 0; v <= yMax; v += 0.5) { c.beginPath(); c.moveTo(l, Y(v)); c.lineTo(W - r, Y(v)); c.stroke(); c.textAlign = 'right'; c.fillText(v.toFixed(1), l - 8, Y(v) + 5); }
+  c.clearRect(0, 0, W, H); c.strokeStyle = '#d3e0dc'; c.fillStyle = '#5b6b66'; c.font = '24px system-ui'; c.lineWidth = 2;
+  for (let v = 0; v <= yMax; v += 0.5) { c.beginPath(); c.moveTo(l, Y(v)); c.lineTo(W - r, Y(v)); c.stroke(); c.textAlign = 'right'; c.fillText(v.toFixed(1), l - 10, Y(v) + 8); }
   c.textAlign = 'center';
-  for (let i = 0; i <= 4; i++) { const v = V.min + (V.max - V.min) * i / 4; c.fillText(Math.round(v), X(v), H - b + 22); }
-  c.fillStyle = '#14201d'; c.font = 'bold 15px system-ui'; c.fillText(`${V.name} (${V.unit})`, (l + W - r) / 2, H - 8);
-  c.save(); c.translate(16, (t + H - b) / 2); c.rotate(-Math.PI / 2); c.fillText('period (s)', 0, 0); c.restore();
-  if (!pts.length) { c.fillStyle = '#5b6b66'; c.font = '16px system-ui'; c.fillText('Your runs will appear here', (l + W) / 2, (t + H - b) / 2); return; }
+  for (let i = 0; i <= 4; i++) { const v = V.min + (V.max - V.min) * i / 4; c.fillText(Math.round(v), X(v), H - b + 32); }
+  c.fillStyle = '#14201d'; c.font = 'bold 24px system-ui'; c.fillText(`${V.name} (${V.unit})`, (l + W - r) / 2, H - 8);
+  c.save(); c.translate(24, (t + H - b) / 2); c.rotate(-Math.PI / 2); c.fillText('period (s)', 0, 0); c.restore();
+  if (!pts.length) { c.fillStyle = '#5b6b66'; c.font = '26px system-ui'; c.fillText('Your runs will appear here', (l + W) / 2, (t + H - b) / 2); return; }
   const sorted = [...pts].sort((p, q) => p[0] - q[0]);
-  c.strokeStyle = 'rgba(15,118,110,.5)'; c.lineWidth = 3; c.beginPath(); sorted.forEach((p, i) => (i ? c.lineTo(X(p[0]), Y(p[1])) : c.moveTo(X(p[0]), Y(p[1])))); c.stroke();
-  pts.forEach((p, i) => { const last = i === pts.length - 1; c.fillStyle = last ? '#f59e0b' : '#0f766e'; c.beginPath(); c.arc(X(p[0]), Y(p[1]), last ? 10 : 7, 0, 7); c.fill(); });
+  c.strokeStyle = 'rgba(15,118,110,.5)'; c.lineWidth = 5; c.beginPath(); sorted.forEach((p, i) => (i ? c.lineTo(X(p[0]), Y(p[1])) : c.moveTo(X(p[0]), Y(p[1])))); c.stroke();
+  pts.forEach((p, i) => { const last = i === pts.length - 1; c.fillStyle = last ? '#f59e0b' : '#0f766e'; c.beginPath(); c.arc(X(p[0]), Y(p[1]), last ? 14 : 10, 0, 7); c.fill(); });
 }
 function startRun() {
   const L = S.cfg.L / 100; let th = S.cfg.A * Math.PI / 180, w = 0, t = 0, count = 0, prevW = 0, last = performance.now();
